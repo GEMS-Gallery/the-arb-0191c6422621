@@ -10,7 +10,7 @@ export { idlFactory } from "./backend.did.js";
  * beginning in dfx 0.15.0
  */
 export const canisterId =
-  'qy3y7-uiaaa-aaaal-qjk6q-cai';
+  '3iphj-uqaaa-aaaal-qjlaa-cai';
 
 export const createActor = (canisterId, options = {}) => {
   const agent = options.agent || new HttpAgent({ ...options.agentOptions });

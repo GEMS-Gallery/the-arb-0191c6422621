@@ -61,10 +61,15 @@ const App: React.FC = () => {
 
   const showIcpAccount = async () => {
     if (authClient) {
-      const identity = await authClient.getIdentity();
-      const principal = identity.getPrincipal();
-      const accountId = Principal.fromText(principal.toText()).toAccountIdentifier();
-      setIcpAccount(accountId);
+      try {
+        const identity = await authClient.getIdentity();
+        const principal = identity.getPrincipal();
+        const accountId = principal.toText();
+        setIcpAccount(accountId);
+      } catch (error) {
+        console.error('Error getting ICP account:', error);
+        setIcpAccount('Error: Unable to fetch ICP account');
+      }
     }
   };
 
@@ -96,7 +101,7 @@ const App: React.FC = () => {
                 )}
                 {icpAccount && (
                   <Typography variant="body1" sx={{ mt: 2 }}>
-                    ICP Ledger Address: {icpAccount}
+                    ICP Account: {icpAccount}
                   </Typography>
                 )}
               </CardContent>
