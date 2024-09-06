@@ -24,7 +24,9 @@ const getAccountId = async (principal: Principal, subAccount: Uint8Array = SUB_A
   accountId.set(subAccount, ACCOUNT_DOMAIN_SEPERATOR.length + principalArr.length);
   try {
     const hash = new Uint8Array(await crypto.subtle.digest("SHA-256", accountId));
-    return Array.from(hash, (b) => b.toString(16).padStart(2, '0')).join('');
+    // Truncate to 224 bits (28 bytes) to simulate SHA-224
+    const truncatedHash = hash.slice(0, 28);
+    return Array.from(truncatedHash, (b) => b.toString(16).padStart(2, '0')).join('');
   } catch (error) {
     console.error('Error generating account ID:', error);
     throw new Error('Failed to generate account ID');
