@@ -6,7 +6,7 @@ import { backend } from 'declarations/backend';
 import { Button, Card, CardContent, Typography, CircularProgress, Container, Box } from '@mui/material';
 
 const SUB_ACCOUNT_ZERO = new Uint8Array(32);
-const ACCOUNT_DOMAIN_SEPERATOR = "\x0Aaccount-id";
+const ACCOUNT_DOMAIN_SEPERATOR = new TextEncoder().encode("\x0Aaccount-id");
 
 const to32bits = (num: number) => {
   let b = new ArrayBuffer(4);
@@ -16,11 +16,14 @@ const to32bits = (num: number) => {
 
 const getAccountId = async (principal: Principal, subAccount: Uint8Array = SUB_ACCOUNT_ZERO) => {
   const principalArr = principal.toUint8Array();
-  const sha = new Uint8Array(principalArr.length + subAccount.length);
-  sha.set(principalArr);
-  sha.set(subAccount, principalArr.length);
+  const accountId = new Uint8Array(
+    ACCOUNT_DOMAIN_SEPERATOR.length + principalArr.length + subAccount.length
+  );
+  accountId.set(ACCOUNT_DOMAIN_SEPERATOR);
+  accountId.set(principalArr, ACCOUNT_DOMAIN_SEPERATOR.length);
+  accountId.set(subAccount, ACCOUNT_DOMAIN_SEPERATOR.length + principalArr.length);
   try {
-    const hash = new Uint8Array(await crypto.subtle.digest("SHA-256", new Uint8Array([...sha, ...ACCOUNT_DOMAIN_SEPERATOR])));
+    const hash = new Uint8Array(await crypto.subtle.digest("SHA-256", accountId));
     return Array.from(hash, (b) => b.toString(16).padStart(2, '0')).join('');
   } catch (error) {
     console.error('Error generating account ID:', error);
