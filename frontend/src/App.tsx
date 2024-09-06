@@ -99,6 +99,8 @@ const sha224 = async (message: Uint8Array): Promise<Uint8Array> => {
     new DataView(result.buffer).setUint32(i * 4, H[i], false);
   }
 
+  console.log('SHA-224 output (hex):', Array.from(result, (b) => b.toString(16).padStart(2, '0')).join(''));
+
   return result;
 };
 
