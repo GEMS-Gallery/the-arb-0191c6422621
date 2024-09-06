@@ -1,0 +1,14 @@
+type Result_1 = 
+ variant {
+   err: text;
+   ok: nat;
+ };
+type Result = 
+ variant {
+   err: text;
+   ok;
+ };
+service : {
+  getBalance: () -> (Result_1);
+  setBalance: (nat) -> (Result);
+}
