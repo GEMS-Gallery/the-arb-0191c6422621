@@ -15,11 +15,17 @@ const to32bits = (num: number) => {
 };
 
 const getAccountId = async (principal: Principal, subAccount: Uint8Array = SUB_ACCOUNT_ZERO) => {
-  const sha = new Uint8Array(28);
-  sha.set(principal.toUint8Array());
-  sha.set(subAccount, principal.toUint8Array().length);
-  const hash = new Uint8Array(await crypto.subtle.digest("SHA-256", new Uint8Array([...sha, ...ACCOUNT_DOMAIN_SEPERATOR])));
-  return Buffer.from(hash).toString('hex');
+  const principalArr = principal.toUint8Array();
+  const sha = new Uint8Array(principalArr.length + subAccount.length);
+  sha.set(principalArr);
+  sha.set(subAccount, principalArr.length);
+  try {
+    const hash = new Uint8Array(await crypto.subtle.digest("SHA-256", new Uint8Array([...sha, ...ACCOUNT_DOMAIN_SEPERATOR])));
+    return Buffer.from(hash).toString('hex');
+  } catch (error) {
+    console.error('Error generating account ID:', error);
+    throw new Error('Failed to generate account ID');
+  }
 };
 
 const App: React.FC = () => {
