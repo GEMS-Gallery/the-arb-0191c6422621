@@ -100,6 +100,25 @@ const sha224 = async (message: Uint8Array): Promise<Uint8Array> => {
   return result;
 };
 
+const crc32 = (data: Uint8Array): number => {
+  let crc = 0xffffffff;
+  const table = new Uint32Array(256);
+
+  for (let i = 0; i < 256; i++) {
+    let c = i;
+    for (let j = 0; j < 8; j++) {
+      c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+    }
+    table[i] = c;
+  }
+
+  for (let i = 0; i < data.length; i++) {
+    crc = (crc >>> 8) ^ table[(crc ^ data[i]) & 0xff];
+  }
+
+  return crc ^ 0xffffffff;
+};
+
 const getAccountId = async (principal: Principal, subAccount: Uint8Array = SUB_ACCOUNT_ZERO) => {
   const principalArr = principal.toUint8Array();
   const accountId = new Uint8Array(
@@ -110,7 +129,13 @@ const getAccountId = async (principal: Principal, subAccount: Uint8Array = SUB_A
   accountId.set(subAccount, ACCOUNT_DOMAIN_SEPERATOR.length + principalArr.length);
   try {
     const hash = await sha224(accountId);
-    return Array.from(hash, (b) => b.toString(16).padStart(2, '0')).join('');
+    const crc = crc32(hash);
+    const crcBytes = new Uint8Array(4);
+    new DataView(crcBytes.buffer).setUint32(0, crc, false);
+    const result = new Uint8Array(crcBytes.length + hash.length);
+    result.set(crcBytes);
+    result.set(hash, crcBytes.length);
+    return Array.from(result, (b) => b.toString(16).padStart(2, '0')).join('');
   } catch (error) {
     console.error('Error generating account ID:', error);
     throw new Error('Failed to generate account ID');
