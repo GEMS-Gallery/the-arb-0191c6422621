@@ -63,7 +63,7 @@ const App: React.FC = () => {
     if (authClient) {
       const identity = await authClient.getIdentity();
       const principal = identity.getPrincipal();
-      const accountId = Principal.fromText(principal.toText()).toText();
+      const accountId = Principal.fromText(principal.toText()).toAccountIdentifier();
       setIcpAccount(accountId);
     }
   };
@@ -96,7 +96,7 @@ const App: React.FC = () => {
                 )}
                 {icpAccount && (
                   <Typography variant="body1" sx={{ mt: 2 }}>
-                    ICP Account: {icpAccount}
+                    ICP Ledger Address: {icpAccount}
                   </Typography>
                 )}
               </CardContent>
