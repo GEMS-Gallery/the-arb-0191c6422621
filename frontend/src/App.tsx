@@ -5,12 +5,30 @@ import { Principal } from '@dfinity/principal';
 import { backend } from 'declarations/backend';
 import { Button, Card, CardContent, Typography, CircularProgress, Container, Box } from '@mui/material';
 
+const SUB_ACCOUNT_ZERO = new Uint8Array(32);
+const ACCOUNT_DOMAIN_SEPERATOR = "\x0Aaccount-id";
+
+const to32bits = (num: number) => {
+  let b = new ArrayBuffer(4);
+  new DataView(b).setUint32(0, num);
+  return Array.from(new Uint8Array(b));
+};
+
+const getAccountId = async (principal: Principal, subAccount: Uint8Array = SUB_ACCOUNT_ZERO) => {
+  const sha = new Uint8Array(28);
+  sha.set(principal.toUint8Array());
+  sha.set(subAccount, principal.toUint8Array().length);
+  const hash = new Uint8Array(await crypto.subtle.digest("SHA-256", new Uint8Array([...sha, ...ACCOUNT_DOMAIN_SEPERATOR])));
+  return Buffer.from(hash).toString('hex');
+};
+
 const App: React.FC = () => {
   const [authClient, setAuthClient] = useState<AuthClient | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [balance, setBalance] = useState<bigint | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [icpAccount, setIcpAccount] = useState<string | null>(null);
+  const [principalId, setPrincipalId] = useState<string | null>(null);
+  const [accountId, setAccountId] = useState<string | null>(null);
 
   useEffect(() => {
     AuthClient.create().then(async (client) => {
@@ -40,7 +58,8 @@ const App: React.FC = () => {
       await authClient.logout();
       setIsAuthenticated(false);
       setBalance(null);
-      setIcpAccount(null);
+      setPrincipalId(null);
+      setAccountId(null);
     }
   };
 
@@ -64,11 +83,14 @@ const App: React.FC = () => {
       try {
         const identity = await authClient.getIdentity();
         const principal = identity.getPrincipal();
-        const accountId = principal.toText();
-        setIcpAccount(accountId);
+        const principalId = principal.toText();
+        setPrincipalId(principalId);
+        const accountId = await getAccountId(principal);
+        setAccountId(accountId);
       } catch (error) {
         console.error('Error getting ICP account:', error);
-        setIcpAccount('Error: Unable to fetch ICP account');
+        setPrincipalId('Error: Unable to fetch Principal');
+        setAccountId('Error: Unable to derive Account ID');
       }
     }
   };
@@ -99,9 +121,14 @@ const App: React.FC = () => {
                     {balance !== null ? balance.toString() : 'N/A'}
                   </Typography>
                 )}
-                {icpAccount && (
+                {principalId && (
                   <Typography variant="body1" sx={{ mt: 2 }}>
-                    ICP Account: {icpAccount}
+                    Principal ID: {principalId}
+                  </Typography>
+                )}
+                {accountId && (
+                  <Typography variant="body1" sx={{ mt: 1 }}>
+                    Account ID: {accountId}
                   </Typography>
                 )}
               </CardContent>
